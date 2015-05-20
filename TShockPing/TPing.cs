@@ -16,6 +16,7 @@ namespace TShockPing
         public AsyncCallback m_pfnCallBack;
         public Socket m_clientSocket;
         public static bool stopThread;
+        public static int returnCode = -1;
 
         public static string serverIP;
         public static int serverPort;
@@ -148,7 +149,8 @@ namespace TShockPing
                       /* run your code here */
                       new TPing();
                   }).Start();
-            }
+                    
+             }
         }
 
         public TPing()
@@ -166,17 +168,22 @@ namespace TShockPing
                     if (stopThread)
                         break;
                     Thread.Sleep(sleepTime);
-                    Console.WriteLine("loop " + retry);
                 }
                 CloseConnection();
                 DisconnectConnection();
+
                 if (ping)
-                    Environment.Exit((int)ExitCode.Success);
+                    returnCode = (int)ExitCode.Connected;
                 else
-                    Environment.Exit((int)ExitCode.NoPing);
+                   returnCode = (int)ExitCode.NoPing;
+
+                Environment.Exit(returnCode);
             }
             else
-                Environment.Exit((int)ExitCode.NotConnected);
+            {
+                returnCode = (int)ExitCode.NotConnected;
+            Environment.Exit(returnCode);
+            }
         }
 
         bool Connect()
@@ -195,7 +202,6 @@ namespace TShockPing
                 m_clientSocket.Connect(ipEnd);
                 if (m_clientSocket.Connected)
                 {
-                    UpdateControls(true);
                     //Wait for data asynchronously 
                     WaitForData();
                 }
@@ -204,9 +210,8 @@ namespace TShockPing
                     Console.WriteLine("not connected.");
                 }
             }
-            catch (SocketException se)
+            catch (SocketException)
             {
-                UpdateControls(false);
                 return false;
             }
             return true;
@@ -308,12 +313,7 @@ namespace TShockPing
                 Console.WriteLine(se.Message);
             }
         }
-        private void UpdateControls(bool connected)
-        {
-
-            string connectStatus = connected ? "Connected" : "Not Connected";
-            Console.WriteLine(connectStatus);
-        }
+ 
         void CloseConnection()
         {
             if (m_clientSocket != null)
@@ -329,7 +329,6 @@ namespace TShockPing
             {
                 m_clientSocket.Close();
                 m_clientSocket = null;
-                UpdateControls(false);
             }
         }
     }
